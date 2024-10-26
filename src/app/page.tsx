@@ -36,4 +36,23 @@ export default function Home() {
       )}
     </div>
   );
+
+  useEffect(() => {
+    const eventSource = new EventSource('/api/warning/stream');
+  
+    eventSource.onmessage = function (event) {
+      const data = JSON.parse(event.data);
+      console.log("Received data:", data); // Tambahkan log ini
+      setWarning(data.warningStatus);
+    };
+  
+    eventSource.onerror = function () {
+      console.error("EventSource failed.");
+      eventSource.close();
+    };
+  
+    return () => {
+      eventSource.close();
+    };
+  }, []);
 }
