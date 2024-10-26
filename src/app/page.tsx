@@ -48,13 +48,19 @@ export default function Home() {
       fetch("/api/warning")
         .then((response) => response.json())
         .then((data) => {
-          if (data.warningStatus && !warning) {
-            audio?.play().catch((error) => console.error("Audio play error:", error));
+          if (data.warningStatus) {
+            if (!warning) {
+              audio?.play().catch((error) => console.error("Audio play error:", error));
+            }
+            setWarning(true);
+          } else if (!data.warningStatus && warning) {
+            // Jika status berubah ke All Clear, tambahkan jeda sebelum kembali ke hijau
+            setTimeout(() => setWarning(false), 5000); // Jeda 5 detik sebelum kembali ke hijau
           }
 
-          setWarning(data.warningStatus);
           setGasLevel(data.gasLevel);
 
+          // Update history data
           setHistory((prev) => [...prev.slice(-9), data.gasLevel]);
           setLabels((prev) => [...prev.slice(-9), new Date().toLocaleTimeString()]);
         })
@@ -80,8 +86,8 @@ export default function Home() {
 
   const options = {
     responsive: true,
-    maintainAspectRatio: false, // Membuat grafik lebih fleksibel di mobile
-    aspectRatio: 2, // Rasio aspek untuk layar mobile
+    maintainAspectRatio: false,
+    aspectRatio: 2,
     plugins: {
       legend: {
         display: true,
@@ -106,7 +112,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center p-8">
-      <h1 className="text-2xl font-bold text-gray-800 mb-8">Gas Monitoring Dashboard</h1>
+      <h1 className="text-4xl font-extrabold text-gray-800 mb-8">
+        Gas Monitoring Dashboard
+      </h1>
 
       <div className="grid grid-cols-2 gap-4 mb-6 w-full max-w-md">
         <div className="p-4 rounded-lg bg-blue-600 text-white shadow-md">
@@ -127,7 +135,6 @@ export default function Home() {
       </div>
 
       <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-xl flex justify-center items-center">
-        {/* Kontainer grafik responsif */}
         <div style={{ width: "100%", maxWidth: "600px", height: "300px" }}>
           <Line data={data} options={options} />
         </div>
