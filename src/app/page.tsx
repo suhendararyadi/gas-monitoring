@@ -1,57 +1,114 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 export default function Home() {
   const [warning, setWarning] = useState(false);
   const [gasLevel, setGasLevel] = useState(0);
+  const [history, setHistory] = useState<number[]>([]);
+  const [labels, setLabels] = useState<string[]>([]);
+  const audio = typeof Audio !== "undefined" ? new Audio("/warning-sound.mp3") : null; // Pastikan Anda memiliki file audio di public folder
 
   useEffect(() => {
-    // Polling setiap 2 detik untuk cek status
     const interval = setInterval(() => {
       fetch("/api/warning")
         .then((response) => response.json())
         .then((data) => {
+          if (data.warningStatus && !warning) {
+            audio?.play(); // Play sound only when switching to warning
+          }
+
           setWarning(data.warningStatus);
           setGasLevel(data.gasLevel);
+
+          // Update history data
+          setHistory((prev) => [...prev.slice(-9), data.gasLevel]); // Keep last 10 readings
+          setLabels((prev) => [
+            ...prev.slice(-9),
+            new Date().toLocaleTimeString(), // Add current time
+          ]);
         })
         .catch((error) => console.error("Polling error:", error));
     }, 2000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [audio, warning]);
+
+  const data = {
+    labels: labels,
+    datasets: [
+      {
+        label: "Gas Level",
+        data: history,
+        borderColor: "rgba(255, 99, 132, 1)",
+        backgroundColor: "rgba(255, 99, 132, 0.2)",
+        fill: true,
+        tension: 0.4,
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: {
+        display: true,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: "PPM Level",
+        },
+      },
+      x: {
+        title: {
+          display: true,
+          text: "Time",
+        },
+      },
+    },
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center p-8">
-      {/* Profile Card */}
-      <div className="bg-white rounded-lg shadow-md p-6 w-full max-w-sm mb-6">
-        <div className="flex items-center justify-between">
-          <div className="text-xl font-bold">Profile</div>
-          <div className="rounded-full bg-red-500 w-8 h-8 flex items-center justify-center text-white font-bold">
-            {warning ? "!" : "✓"}
-          </div>
-        </div>
-        <div className="mt-4 flex items-center">
-          <div className="rounded-full bg-gray-200 w-16 h-16"></div>
-          <div className="ml-4">
-            <h2 className="text-lg font-semibold">Gas Monitoring</h2>
-            <p className="text-gray-500">Sensor Status</p>
-          </div>
-        </div>
-        <div className="mt-6 flex justify-between text-sm text-gray-600">
-          <div>Normal</div>
-          <div>Warning</div>
-          <div>Alarm</div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center p-8">
+      {/* Application Title */}
+      <h1 className="text-2xl font-bold text-gray-800 mb-8">Gas Monitoring Dashboard</h1>
 
-      {/* Task Cards */}
+      {/* Status and Gas Level Cards */}
       <div className="grid grid-cols-2 gap-4 mb-6 w-full max-w-md">
-        <div className="p-4 rounded-lg bg-gradient-to-r from-pink-300 to-orange-300 shadow-md">
+        <div className="p-4 rounded-lg bg-blue-600 text-white shadow-md">
           <h3 className="font-semibold text-lg">Gas Level</h3>
           <p className="text-3xl font-bold mt-2">{gasLevel}</p>
-          <span className="text-sm text-gray-700">PPM Level</span>
+          <span className="text-sm">PPM Level</span>
         </div>
-        <div className="p-4 rounded-lg bg-gradient-to-r from-blue-300 to-teal-300 shadow-md">
+        <div
+          className={`p-4 rounded-lg text-white shadow-md ${
+            warning ? "bg-red-600" : "bg-green-500"
+          }`}
+        >
           <h3 className="font-semibold text-lg">Status</h3>
           <p className="text-3xl font-bold mt-2">
             {warning ? "Warning" : "All Clear"}
@@ -59,21 +116,14 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Focusing Analytics Card */}
-      <div className="bg-white rounded-lg shadow-md p-6 w-full max-w-xl">
+      {/* Analytics Card with Graph */}
+      <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-xl">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-lg">Gas Monitoring Analytics</h3>
-          <span className="text-gray-600 text-sm">Range: Last month</span>
+          <h3 className="font-semibold text-lg text-gray-800">Gas Monitoring Analytics</h3>
+          <span className="text-gray-500 text-sm">Last 10 readings</span>
         </div>
-        {/* Placeholder for Graph */}
-        <div className="h-40 bg-gray-100 rounded-lg flex items-center justify-center text-gray-500">
-          (Graph Placeholder)
-        </div>
-        <div className="flex justify-between text-gray-600 text-sm mt-4">
-          <div>Minimum</div>
-          <div>Maximum</div>
-          <div>Average</div>
-        </div>
+        {/* Chart */}
+        <Line data={data} options={options} />
       </div>
     </div>
   );
