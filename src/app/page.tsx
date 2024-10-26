@@ -27,7 +27,9 @@ export default function Home() {
   const [gasLevel, setGasLevel] = useState(0);
   const [temperature, setTemperature] = useState(0);
   const [humidity, setHumidity] = useState(0);
-  const [history, setHistory] = useState<number[]>([]);
+  const [gasHistory, setGasHistory] = useState<number[]>([]);
+  const [temperatureHistory, setTemperatureHistory] = useState<number[]>([]);
+  const [humidityHistory, setHumidityHistory] = useState<number[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
 
@@ -59,7 +61,10 @@ export default function Home() {
           setTemperature(data.temperature);
           setHumidity(data.humidity);
 
-          setHistory((prev) => [...prev.slice(-9), data.gasLevel]);
+          // Update history data untuk gas level, temperature, dan humidity
+          setGasHistory((prev) => [...prev.slice(-9), data.gasLevel]);
+          setTemperatureHistory((prev) => [...prev.slice(-9), data.temperature]);
+          setHumidityHistory((prev) => [...prev.slice(-9), data.humidity]);
           setLabels((prev) => [...prev.slice(-9), new Date().toLocaleTimeString()]);
         })
         .catch((error) => console.error("Polling error:", error));
@@ -68,14 +73,31 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [audio, warning]);
 
+  // Data untuk grafik, termasuk gas level, temperature, dan humidity
   const data = {
     labels: labels,
     datasets: [
       {
         label: "Gas Level",
-        data: history,
+        data: gasHistory,
         borderColor: "rgba(255, 99, 132, 1)",
         backgroundColor: "rgba(255, 99, 132, 0.2)",
+        fill: true,
+        tension: 0.4,
+      },
+      {
+        label: "Temperature (°C)",
+        data: temperatureHistory,
+        borderColor: "rgba(54, 162, 235, 1)",
+        backgroundColor: "rgba(54, 162, 235, 0.2)",
+        fill: true,
+        tension: 0.4,
+      },
+      {
+        label: "Humidity (%)",
+        data: humidityHistory,
+        borderColor: "rgba(75, 192, 192, 1)",
+        backgroundColor: "rgba(75, 192, 192, 0.2)",
         fill: true,
         tension: 0.4,
       },
@@ -96,7 +118,7 @@ export default function Home() {
         beginAtZero: true,
         title: {
           display: true,
-          text: "PPM Level",
+          text: "Values",
         },
       },
       x: {
@@ -130,11 +152,11 @@ export default function Home() {
             {warning ? "Warning" : "All Clear"}
           </p>
         </div>
-        <div className="p-4 rounded-lg bg-blue-500 text-white shadow-md">
+        <div className="p-4 rounded-lg bg-blue-600 text-white shadow-md">
           <h3 className="font-semibold text-lg">Temperature</h3>
           <p className="text-3xl font-bold mt-2">{temperature}°C</p>
         </div>
-        <div className="p-4 rounded-lg bg-blue-500 text-white shadow-md">
+        <div className="p-4 rounded-lg bg-blue-600 text-white shadow-md">
           <h3 className="font-semibold text-lg">Humidity</h3>
           <p className="text-3xl font-bold mt-2">{humidity}%</p>
         </div>
