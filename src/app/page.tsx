@@ -25,6 +25,8 @@ ChartJS.register(
 export default function Home() {
   const [warning, setWarning] = useState(false);
   const [gasLevel, setGasLevel] = useState(0);
+  const [temperature, setTemperature] = useState(0);
+  const [humidity, setHumidity] = useState(0);
   const [history, setHistory] = useState<number[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
@@ -48,19 +50,15 @@ export default function Home() {
       fetch("/api/warning")
         .then((response) => response.json())
         .then((data) => {
-          if (data.warningStatus) {
-            if (!warning) {
-              audio?.play().catch((error) => console.error("Audio play error:", error));
-            }
-            setWarning(true);
-          } else if (!data.warningStatus && warning) {
-            // Jika status berubah ke All Clear, tambahkan jeda sebelum kembali ke hijau
-            setTimeout(() => setWarning(false), 5000); // Jeda 5 detik sebelum kembali ke hijau
+          if (data.warningStatus && !warning) {
+            audio?.play().catch((error) => console.error("Audio play error:", error));
           }
 
+          setWarning(data.warningStatus);
           setGasLevel(data.gasLevel);
+          setTemperature(data.temperature);
+          setHumidity(data.humidity);
 
-          // Update history data
           setHistory((prev) => [...prev.slice(-9), data.gasLevel]);
           setLabels((prev) => [...prev.slice(-9), new Date().toLocaleTimeString()]);
         })
@@ -131,6 +129,14 @@ export default function Home() {
           <p className="text-3xl font-bold mt-2">
             {warning ? "Warning" : "All Clear"}
           </p>
+        </div>
+        <div className="p-4 rounded-lg bg-blue-500 text-white shadow-md">
+          <h3 className="font-semibold text-lg">Temperature</h3>
+          <p className="text-3xl font-bold mt-2">{temperature}°C</p>
+        </div>
+        <div className="p-4 rounded-lg bg-blue-500 text-white shadow-md">
+          <h3 className="font-semibold text-lg">Humidity</h3>
+          <p className="text-3xl font-bold mt-2">{humidity}%</p>
         </div>
       </div>
 

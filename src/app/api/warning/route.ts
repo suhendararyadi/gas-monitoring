@@ -1,31 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-let warningStatus = false;
-let gasLevel = 0; // Variabel untuk menyimpan nilai gas level terbaru
+let sensorData = {
+  warningStatus: false,
+  gasLevel: 0,
+  temperature: 0,
+  humidity: 0,
+};
 
 export async function POST(req: NextRequest) {
-  const { message, level } = await req.json();
+  const { message, gasLevel, temperature, humidity } = await req.json();
 
-  // Simpan nilai gas level yang diterima
-  gasLevel = level;
+  // Perbarui nilai gas level, suhu, dan kelembaban yang diterima
+  sensorData.gasLevel = gasLevel;
+  sensorData.temperature = temperature;
+  sensorData.humidity = humidity;
 
-  // Set status sesuai dengan pesan dari ESP32
+  // Atur status warning berdasarkan pesan dari ESP32
   if (message === "Gas leakage detected!") {
-    warningStatus = true;
+    sensorData.warningStatus = true;
   } else {
-    warningStatus = false;
+    sensorData.warningStatus = false;
   }
 
-  return NextResponse.json({ status: 'Warning status updated', warningStatus, gasLevel });
+  return NextResponse.json({ status: 'Sensor data updated', ...sensorData });
 }
 
 export async function GET() {
-  // Ambil status dan level gas saat ini
-  const currentStatus = warningStatus;
-  const currentGasLevel = gasLevel;
+  // Ambil data sensor saat ini
+  const currentStatus = sensorData.warningStatus;
+  const currentGasLevel = sensorData.gasLevel;
+  const currentTemperature = sensorData.temperature;
+  const currentHumidity = sensorData.humidity;
 
-  // Reset status setelah setiap polling
-  warningStatus = false; 
+  // Reset status warning hanya jika diperlukan berdasarkan kondisi polling
+  // (Jika Anda ingin mempertahankan status setelah polling, hapus reset otomatis)
+  sensorData.warningStatus = false;
 
-  return NextResponse.json({ warningStatus: currentStatus, gasLevel: currentGasLevel });
+  return NextResponse.json({
+    warningStatus: currentStatus,
+    gasLevel: currentGasLevel,
+    temperature: currentTemperature,
+    humidity: currentHumidity,
+  });
 }
