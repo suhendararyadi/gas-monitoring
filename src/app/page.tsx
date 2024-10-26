@@ -27,27 +27,38 @@ export default function Home() {
   const [gasLevel, setGasLevel] = useState(0);
   const [history, setHistory] = useState<number[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
-  const audio = typeof Audio !== "undefined" ? new Audio("/warning-sound.mp3") : null;
+  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    // Inisialisasi audio setelah ada interaksi pengguna
+    const handleClick = () => {
+      if (!audio) {
+        const newAudio = new Audio("/warning-sound.mp3");
+        setAudio(newAudio);
+      }
+      window.removeEventListener("click", handleClick);
+    };
+
+    window.addEventListener("click", handleClick);
+
+    return () => window.removeEventListener("click", handleClick);
+  }, [audio]);
 
   useEffect(() => {
     const interval = setInterval(() => {
       fetch("/api/warning")
         .then((response) => response.json())
         .then((data) => {
-          // Mainkan suara hanya jika status berubah dari All Clear ke Warning
           if (data.warningStatus && !warning) {
-            audio?.play().catch((error) => console.error("Audio play error:", error)); // Error handling
+            audio?.play().catch((error) => console.error("Audio play error:", error));
           }
 
           setWarning(data.warningStatus);
           setGasLevel(data.gasLevel);
 
           // Update history data
-          setHistory((prev) => [...prev.slice(-9), data.gasLevel]); // Keep last 10 readings
-          setLabels((prev) => [
-            ...prev.slice(-9),
-            new Date().toLocaleTimeString(), // Add current time
-          ]);
+          setHistory((prev) => [...prev.slice(-9), data.gasLevel]);
+          setLabels((prev) => [...prev.slice(-9), new Date().toLocaleTimeString()]);
         })
         .catch((error) => console.error("Polling error:", error));
     }, 2000);
@@ -95,10 +106,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center p-8">
-      {/* Application Title */}
       <h1 className="text-2xl font-bold text-gray-800 mb-8">Gas Monitoring Dashboard</h1>
 
-      {/* Status and Gas Level Cards */}
       <div className="grid grid-cols-2 gap-4 mb-6 w-full max-w-md">
         <div className="p-4 rounded-lg bg-blue-600 text-white shadow-md">
           <h3 className="font-semibold text-lg">Gas Level</h3>
@@ -117,13 +126,11 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Analytics Card with Graph */}
       <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-xl">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-lg text-gray-800">Gas Monitoring Analytics</h3>
           <span className="text-gray-500 text-sm">Last 10 readings</span>
         </div>
-        {/* Chart */}
         <Line data={data} options={options} />
       </div>
     </div>
