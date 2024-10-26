@@ -5,15 +5,21 @@ export default function Home() {
   const [warning, setWarning] = useState(false);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetch('/api/warning')
-        .then((response) => response.json())
-        .then((data) => {
-          setWarning(data.warningStatus);
-        });
-    }, 5000);
+    const eventSource = new EventSource('/api/warning/stream');
 
-    return () => clearInterval(interval);
+    eventSource.onmessage = function (event) {
+      const data = JSON.parse(event.data);
+      setWarning(data.warningStatus);
+    };
+
+    eventSource.onerror = function () {
+      console.error("EventSource failed.");
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
   }, []);
 
   return (
