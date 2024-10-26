@@ -27,15 +27,16 @@ export default function Home() {
   const [gasLevel, setGasLevel] = useState(0);
   const [history, setHistory] = useState<number[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
-  const audio = typeof Audio !== "undefined" ? new Audio("/warning-sound.mp3") : null; // Pastikan Anda memiliki file audio di public folder
+  const audio = typeof Audio !== "undefined" ? new Audio("/warning-sound.mp3") : null;
 
   useEffect(() => {
     const interval = setInterval(() => {
       fetch("/api/warning")
         .then((response) => response.json())
         .then((data) => {
+          // Mainkan suara hanya jika status berubah dari All Clear ke Warning
           if (data.warningStatus && !warning) {
-            audio?.play(); // Play sound only when switching to warning
+            audio?.play().catch((error) => console.error("Audio play error:", error)); // Error handling
           }
 
           setWarning(data.warningStatus);
