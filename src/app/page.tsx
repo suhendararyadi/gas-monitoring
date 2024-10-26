@@ -5,21 +5,17 @@ export default function Home() {
   const [warning, setWarning] = useState(false);
 
   useEffect(() => {
-    const eventSource = new EventSource('/api/warning/stream');
+    // Mengambil status dari endpoint setiap 2 detik
+    const interval = setInterval(() => {
+      fetch('/api/warning')
+        .then((response) => response.json())
+        .then((data) => {
+          setWarning(data.warningStatus);
+        })
+        .catch((error) => console.error("Polling error:", error));
+    }, 2000);
 
-    eventSource.onmessage = function (event) {
-      const data = JSON.parse(event.data);
-      setWarning(data.warningStatus);
-    };
-
-    eventSource.onerror = function () {
-      console.error("EventSource failed.");
-      eventSource.close();
-    };
-
-    return () => {
-      eventSource.close();
-    };
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -36,23 +32,4 @@ export default function Home() {
       )}
     </div>
   );
-
-  useEffect(() => {
-    const eventSource = new EventSource('/api/warning/stream');
-  
-    eventSource.onmessage = function (event) {
-      const data = JSON.parse(event.data);
-      console.log("Received data:", data); // Tambahkan log ini
-      setWarning(data.warningStatus);
-    };
-  
-    eventSource.onerror = function () {
-      console.error("EventSource failed.");
-      eventSource.close();
-    };
-  
-    return () => {
-      eventSource.close();
-    };
-  }, []);
 }
