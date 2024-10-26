@@ -5,6 +5,7 @@ let warningStatus = false;
 export async function POST(req: NextRequest) {
   const { message } = await req.json();
 
+  // Set status sesuai dengan pesan dari ESP32
   if (message === "Gas leakage detected!") {
     warningStatus = true;
   } else {
@@ -15,5 +16,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  return NextResponse.json({ warningStatus });
+  // Ambil status saat ini, lalu reset ke false agar polling berikutnya tidak menunjukkan "Warning"
+  const currentStatus = warningStatus;
+  warningStatus = false; // Reset status setelah setiap polling
+
+  return NextResponse.json({ warningStatus: currentStatus });
 }
