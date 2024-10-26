@@ -30,7 +30,6 @@ export default function Home() {
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // Inisialisasi audio setelah ada interaksi pengguna
     const handleClick = () => {
       if (!audio) {
         const newAudio = new Audio("/warning-sound.mp3");
@@ -56,7 +55,6 @@ export default function Home() {
           setWarning(data.warningStatus);
           setGasLevel(data.gasLevel);
 
-          // Update history data
           setHistory((prev) => [...prev.slice(-9), data.gasLevel]);
           setLabels((prev) => [...prev.slice(-9), new Date().toLocaleTimeString()]);
         })
@@ -82,6 +80,8 @@ export default function Home() {
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false, // Membuat grafik lebih fleksibel di mobile
+    aspectRatio: 2, // Rasio aspek untuk layar mobile
     plugins: {
       legend: {
         display: true,
@@ -126,12 +126,11 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-xl">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-lg text-gray-800">Gas Monitoring Analytics</h3>
-          <span className="text-gray-500 text-sm">Last 10 readings</span>
+      <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-xl flex justify-center items-center">
+        {/* Kontainer grafik responsif */}
+        <div style={{ width: "100%", maxWidth: "600px", height: "300px" }}>
+          <Line data={data} options={options} />
         </div>
-        <Line data={data} options={options} />
       </div>
     </div>
   );
