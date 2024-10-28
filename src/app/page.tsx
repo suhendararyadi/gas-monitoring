@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import Head from 'next/head';
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -33,18 +32,6 @@ export default function Home() {
   const [humidityHistory, setHumidityHistory] = useState<number[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
-
-  const [title, setTitle] = useState("Judul Awal");
-
-    return (
-        <>
-            <Head>
-                <title>{title}</title>
-            </Head>
-            <h1>Gas Monitoring System </h1>
-            <button onClick={() => setTitle("Judul Baru")}>Suhendar Aryadi</button>
-        </>
-    );
 
   useEffect(() => {
     const handleClick = () => {
@@ -142,8 +129,6 @@ export default function Home() {
       },
     },
   };
-
-  
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center p-8">
